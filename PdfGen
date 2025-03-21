@@ -1,0 +1,60 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfButtonFormField;
+import com.itextpdf.forms.fields.PdfFormField;
+import java.io.File;
+import java.io.IOException;
+
+public class JsonToPdfRadioButtons {
+
+    public static void main(String[] args) {
+        String jsonString = "{\"items\": [\"Option A\", \"Option B\", \"Option C\"]}"; // Example JSON
+        String pdfFilePath = "output.pdf";
+
+        try {
+            generatePdfWithRadioButtons(jsonString, pdfFilePath);
+            System.out.println("PDF generated successfully: " + pdfFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void generatePdfWithRadioButtons(String jsonString, String pdfFilePath) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonNode = objectMapper.readTree(jsonString);
+
+        if (jsonNode.has("items") && jsonNode.get("items").isArray()) {
+            JsonNode items = jsonNode.get("items");
+
+            File file = new File(pdfFilePath);
+            file.getParentFile().mkdirs(); // Ensure directory exists
+
+            PdfWriter writer = new PdfWriter(pdfFilePath);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            PdfAcroForm form = PdfAcroForm.getAcroForm(pdf, true);
+
+            String groupName = "radioGroup"; // Unique group name for radio buttons
+
+            for (int i = 0; i < items.size(); i++) {
+                String option = items.get(i).asText();
+                Paragraph paragraph = new Paragraph(option);
+                document.add(paragraph);
+
+                PdfButtonFormField radioButton = PdfFormField.createRadioButton(pdf, option, groupName);
+                radioButton.setWidgetRectangle(0, i * 20, 15, (i*20) + 15); // Adjust position as needed
+                form.addField(radioButton);
+            }
+
+            document.close();
+        } else {
+            System.err.println("Invalid JSON format. Expected an array named 'items'.");
+        }
+    }
+}
