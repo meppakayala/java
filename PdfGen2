@@ -1,0 +1,58 @@
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.forms.PdfAcroForm;
+import com.itextpdf.forms.fields.PdfRadioButtonFormField;
+import com.itextpdf.kernel.geom.Rectangle;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+public class JsonToPdfRadioButtons {
+
+    public static void main(String[] args) {
+        String jsonString = "[{\"label\":\"Option A\"}, {\"label\":\"Option B\"}, {\"label\":\"Option C\"}]";
+        String pdfFilePath = "radio_buttons.pdf";
+
+        try {
+            generatePdfWithRadioButtons(jsonString, pdfFilePath);
+            System.out.println("PDF generated successfully! File saved to: " + pdfFilePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void generatePdfWithRadioButtons(String jsonString, String pdfFilePath) throws IOException {
+
+        Path path = Paths.get(pdfFilePath);
+        Files.createDirectories(path.getParent()); //Create parent directories if they don't exist.
+
+        try (PdfWriter writer = new PdfWriter(new FileOutputStream(pdfFilePath));
+             PdfDocument pdf = new PdfDocument(writer);
+             Document document = new Document(pdf)) {
+
+            PdfAcroForm form = PdfAcroForm.getAcroForm(pdf, true);
+            JSONArray jsonArray = new JSONArray(jsonString);
+
+            PdfRadioButtonFormField radioGroup = PdfRadioButtonFormField.createRadioButton(pdf, "radioGroup", "");
+
+            float yPosition = 750; // Starting Y position
+
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                String label = jsonObject.getString("label");
+
+                Rectangle rect = new Rectangle(100, yPosition, 20, 20); // Radio button position and size
+                radioGroup.addRadioButton(rect, label);
+
+                yPosition -= 30; // Move to the next Y position
+            }
+            form.addField(radioGroup);
+        }
+    }
+}
