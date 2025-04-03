@@ -1,0 +1,88 @@
+/*
+I have documents in opensearch as below:
+
+{
+
+"parent": "p1",
+
+"child1": "c1",
+
+"child2": "c2"
+
+},
+
+{
+
+"parent": "p1",
+
+"child1": "c1",
+
+"child2": "c3"
+
+}
+
+where p1 is parent of c1 and c1 is parent of c2 and c3
+
+how can I aggregate and get parent child relationship in the result
+*/
+
+Answer:
+Input:
+{
+  "size": 0,
+  "aggs": {
+    "parents": {
+      "terms": {
+        "field": "parent"
+      },
+      "aggs": {
+        "child1s": {
+          "terms": {
+            "field": "child1"
+          },
+          "aggs": {
+            "child2s": {
+              "terms": {
+                "field": "child2"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+Outpt:
+{
+  "aggregations": {
+    "parents": {
+      "buckets": [
+        {
+          "key": "p1",
+          "doc_count": 2,
+          "child1s": {
+            "buckets": [
+              {
+                "key": "c1",
+                "doc_count": 2,
+                "child2s": {
+                  "buckets": [
+                    {
+                      "key": "c2",
+                      "doc_count": 1
+                    },
+                    {
+                      "key": "c3",
+                      "doc_count": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
