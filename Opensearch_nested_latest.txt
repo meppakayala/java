@@ -1,0 +1,117 @@
+{
+  "mappings": {
+    "properties": {
+      "comm_type": {
+        "type": "nested",
+        "properties": {
+          "name": { "type": "keyword" },
+          "children": {
+            "type": "nested",
+            "properties": {
+              "name": { "type": "keyword" },
+              "children": {
+                "type": "nested",
+                "properties": {
+                  "name": { "type": "keyword" },
+                  "children": {
+                    "type": "nested"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+{
+  "comm_type": [
+    {
+      "name": "Email",
+      "children": [
+        {
+          "name": "Transactional",
+          "children": [
+            {
+              "name": "Order Confirmation"
+            },
+            {
+              "name": "Password Reset"
+            }
+          ]
+        },
+        {
+          "name": "Marketing",
+          "children": [
+            {
+              "name": "Newsletter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SMS",
+      "children": [
+        {
+          "name": "Alerts",
+          "children": [
+            {
+              "name": "Delivery Update"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+
+{
+  "size": 0,
+  "aggs": {
+    "comm_type_tree": {
+      "nested": {
+        "path": "comm_type"
+      },
+      "aggs": {
+        "comm_type_name": {
+          "terms": {
+            "field": "comm_type.name"
+          },
+          "aggs": {
+            "children": {
+              "nested": {
+                "path": "comm_type.children"
+              },
+              "aggs": {
+                "child_name": {
+                  "terms": {
+                    "field": "comm_type.children.name"
+                  },
+                  "aggs": {
+                    "grand_children": {
+                      "nested": {
+                        "path": "comm_type.children.children"
+                      },
+                      "aggs": {
+                        "grand_child_name": {
+                          "terms": {
+                            "field": "comm_type.children.children.name"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
