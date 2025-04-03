@@ -1,0 +1,67 @@
+/*
+what is the best data structure representation in opensearch to have parent child relationship in between attributes in the same document. I need flattened structure.
+*/
+Recommended Data Structure:
+{
+  "relationships": [
+    {
+      "parent": "p1",
+      "child": "c1"
+    },
+    {
+      "parent": "c1",
+      "child": "c2"
+    },
+    {
+      "parent": "c1",
+      "child": "c3"
+    }
+  ]
+}
+
+Find documents where "p1" is a parent:
+{
+  "query": {
+    "nested": {
+      "path": "relationships",
+      "query": {
+        "term": {
+          "relationships.parent": "p1"
+        }
+      }
+    }
+  }
+}
+
+Find documents where "c2" is a child:
+{
+  "query": {
+    "nested": {
+      "path": "relationships",
+      "query": {
+        "term": {
+          "relationships.child": "c2"
+        }
+      }
+    }
+  }
+}
+
+Aggregation of all parents:
+{
+  "size": 0,
+  "aggs": {
+    "parents": {
+      "nested": {
+        "path": "relationships"
+      },
+      "aggs": {
+        "parent_terms": {
+          "terms": {
+            "field": "relationships.parent"
+          }
+        }
+      }
+    }
+  }
+}
