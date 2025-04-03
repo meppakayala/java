@@ -1,0 +1,131 @@
+// Mapping
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "name": {
+        "type": "keyword"
+      },
+      "children": {
+        "type": "nested",
+        "dynamic": "strict",
+        "properties": {
+          "id": {
+            "type": "keyword"
+          },
+          "name": {
+            "type": "keyword"
+          },
+          "children": {
+            "type": "nested",
+            "dynamic": "strict"
+          }
+        }
+      }
+    }
+  }
+}
+
+// Sample Document
+{
+  "id": "root-1",
+  "name": "Root Node 1",
+  "children": [
+    {
+      "id": "level1-1",
+      "name": "Level 1 Node 1",
+      "children": [
+        {
+          "id": "level2-1",
+          "name": "Level 2 Node 1",
+          "children": [
+            {
+              "id": "level3-1",
+              "name": "Level 3 Node 1",
+              "children": []
+            },
+            {
+              "id": "level3-2",
+              "name": "Level 3 Node 2",
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "level2-2",
+          "name": "Level 2 Node 2",
+          "children": [
+            {
+              "id": "level3-3",
+              "name": "Level 3 Node 3",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "level1-2",
+      "name": "Level 1 Node 2",
+      "children": [
+        {
+          "id": "level2-3",
+          "name": "Level 2 Node 3",
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+
+// Aggregation Query
+{
+  "aggs": {
+    "tree": {
+      "nested": {
+        "path": "children"
+      },
+      "aggs": {
+        "level1": {
+          "terms": {
+            "field": "children.name",
+            "size": 10000
+          },
+          "aggs": {
+            "nested_children": {
+              "nested":{
+                "path":"children.children"
+              },
+              "aggs":{
+                "level2":{
+                  "terms":{
+                    "field":"children.children.name",
+                    "size": 10000
+                  },
+                  "aggs":{
+                    "nested_children2":{
+                      "nested":{
+                        "path":"children.children.children"
+                      },
+                      "aggs":{
+                        "level3":{
+                          "terms":{
+                            "field":"children.children.children.name",
+                            "size":10000
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "size": 0
+}
