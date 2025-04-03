@@ -1,0 +1,41 @@
+Mapping:
+{
+  "mappings": {
+    "properties": {
+      "relationships": {
+        "type": "nested",
+        "properties": {
+          "parent": { "type": "keyword" },
+          "child": { "type": "keyword" }
+        }
+      }
+    }
+  }
+}
+---------------------------------
+{
+  "relationships": [
+    {
+      "parent": "p1",
+      "child": "c1"
+    },
+    {
+      "parent": "p1",
+      "child": "c2"
+    },
+    {
+      "parent": "p1",
+      "child": "c3"
+    },
+    {
+      "parent": "p2",
+      "child": "c4"
+    },
+    {
+      "parent": "p2",
+      "child": "c5"
+    }
+    // ... more relationships
+  ]
+}
+
