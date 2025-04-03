@@ -1,0 +1,148 @@
+//Mapping
+{
+  "mappings": {
+    "properties": {
+      "id": {
+        "type": "keyword"
+      },
+      "relationships": {
+        "type": "nested",
+        "properties": {
+          "parent_id": {
+            "type": "keyword"
+          },
+          "child_id": {
+            "type": "keyword"
+          },
+          "level": {
+            "type": "integer"
+          },
+          "data":{
+            "type": "text"
+          }
+        }
+      }
+    }
+  }
+}
+
+//Sample Document
+{
+  "id": "doc1",
+  "relationships": [
+    {
+      "parent_id": "A",
+      "child_id": "B",
+      "level": 1,
+      "data": "A to B"
+    },
+    {
+      "parent_id": "A",
+      "child_id": "C",
+      "level": 1,
+      "data": "A to C"
+    },
+    {
+      "parent_id": "B",
+      "child_id": "D",
+      "level": 2,
+      "data": "B to D"
+    },
+    {
+      "parent_id": "C",
+      "child_id": "E",
+      "level": 2,
+      "data": "C to E"
+    },
+    {
+      "parent_id": "E",
+      "child_id": "F",
+      "level": 3,
+      "data":"E to F"
+    }
+  ]
+}
+
+//Query with Aggregation
+{
+  "aggs": {
+    "levels": {
+      "nested": {
+        "path": "relationships"
+      },
+      "aggs": {
+        "level_counts": {
+          "terms": {
+            "field": "relationships.level"
+          },
+          "aggs": {
+            "parent_child_counts": {
+              "terms": {
+                "script": {
+                  "source": "doc['relationships.parent_id'].value + '->' + doc['relationships.child_id'].value"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+//Result
+{
+  "aggregations": {
+    "levels": {
+      "doc_count": 5,
+      "level_counts": {
+        "buckets": [
+          {
+            "key": 1,
+            "doc_count": 2,
+            "parent_child_counts": {
+              "buckets": [
+                {
+                  "key": "A->B",
+                  "doc_count": 1
+                },
+                {
+                  "key": "A->C",
+                  "doc_count": 1
+                }
+              ]
+            }
+          },
+          {
+            "key": 2,
+            "doc_count": 2,
+             "parent_child_counts": {
+              "buckets": [
+                {
+                  "key": "B->D",
+                  "doc_count": 1
+                },
+                {
+                  "key": "C->E",
+                  "doc_count": 1
+                }
+              ]
+            }
+          },
+          {
+            "key": 3,
+            "doc_count": 1,
+             "parent_child_counts": {
+              "buckets": [
+                {
+                  "key": "E->F",
+                  "doc_count": 1
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
