@@ -1,6 +1,21 @@
 /*
 what is the best data structure representation in opensearch to have parent child relationship in between attributes in the same document. I need flattened structure.
 */
+Mapping:
+{
+  "mappings": {
+    "properties": {
+      "relationships": {
+        "type": "nested",
+        "properties": {
+          "parent": { "type": "keyword" },
+          "child": { "type": "keyword" }
+        }
+      }
+    }
+  }
+}
+
 Recommended Data Structure:
 {
   "relationships": [
