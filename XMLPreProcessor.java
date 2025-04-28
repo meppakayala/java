@@ -3,6 +3,11 @@ import java.util.regex.Pattern;
 
 public class XmlPreprocessor {
 
+    import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class XmlPreprocessor {
+
     public static String makeXmlParsable(String inputXml) {
         if (inputXml == null) {
             return null;
@@ -11,8 +16,6 @@ public class XmlPreprocessor {
         String parsableXml = inputXml;
 
         // 1. Escape stray '<' and '>' within element content
-        // This regex looks for '<' or '>' that are within the content of an element
-        // (i.e., between a start and end tag).
         Pattern contentEscapePattern = Pattern.compile(">([^<>]*)<");
         Matcher contentMatcher = contentEscapePattern.matcher(parsableXml);
         StringBuffer sb = new StringBuffer();
@@ -24,17 +27,25 @@ public class XmlPreprocessor {
         contentMatcher.appendTail(sb);
         parsableXml = sb.toString();
 
-        // Additionally, handle cases where < or > might be at the very beginning
+        // 2. Handle cases where < or > might be at the very beginning
         // or end of the element content.
-        parsableXml = parsableXml.replaceAll("<([^<>]*)</", (match) -> {
-            String content = match.substring(1, match.length() - 2); // Extract content
-            String escapedContent = content.replace("<", "&lt;").replace(">", "&gt;");
-            return "<" + escapedContent + "</";
-        });
+        Pattern boundaryEscapePattern = Pattern.compile("<([^<>]*?)(<|>)([^<>]*?)</");
+        Matcher boundaryMatcher = boundaryEscapePattern.matcher(parsableXml);
+        StringBuffer sb2 = new StringBuffer();
+        while (boundaryMatcher.find()) {
+            String before = boundaryMatcher.group(1);
+            String invalidChar = boundaryMatcher.group(2);
+            String after = boundaryMatcher.group(3);
+            String escapedChar = invalidChar.equals("<") ? "&lt;" : "&gt;";
+            boundaryMatcher.appendReplacement(sb2, "<" + before + escapedChar + after + "</");
+        }
+        boundaryMatcher.appendTail(sb2);
+        parsableXml = sb2.toString();
 
         return parsableXml;
     }
 
+ 
     public static void main(String[] args) {
         String veryInvalidXml = "<root>Some <data with < embedded > and & chars & also unclosed <tag></root>";
         System.out.println("Original Invalid XML:\n" + veryInvalidXml);
