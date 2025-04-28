@@ -8,30 +8,29 @@ public class XmlPreprocessor {
             return null;
         }
 
-        // Basic replacements to handle common issues making XML unparsable
         String parsableXml = inputXml;
 
-        // 1. Escape stray '<' and '>' outside of tags
-        // This regex looks for '<' or '>' that are NOT followed/preceded by
-        // a word character (letter, number, underscore) or a forward slash.
-        // This is a heuristic and might need refinement based on your specific data.
-        parsableXml = parsableXml.replaceAll("(?<![\\w/])<(?![\\w/])", "&lt;");
-        parsableXml = parsableXml.replaceAll("(?<![\\w/])>(?![\\w/])", "&gt;");
+        // 1. Escape stray '<' and '>' within element content
+        // This regex looks for '<' or '>' that are within the content of an element
+        // (i.e., between a start and end tag).
+        Pattern contentEscapePattern = Pattern.compile(">([^<>]*)<");
+        Matcher contentMatcher = contentEscapePattern.matcher(parsableXml);
+        StringBuffer sb = new StringBuffer();
+        while (contentMatcher.find()) {
+            String content = contentMatcher.group(1);
+            String escapedContent = content.replace("<", "&lt;").replace(">", "&gt;");
+            contentMatcher.appendReplacement(sb, ">" + escapedContent + "<");
+        }
+        contentMatcher.appendTail(sb);
+        parsableXml = sb.toString();
 
-        // 2. Escape stray '&' that are not part of an entity
-        parsableXml = parsableXml.replaceAll("&(?!([a-zA-z0-9]+;|#\\d+;|#x[0-9a-fA-F]+;))", "&amp;");
-
-        // 3. Attempt to fix simple unclosed tags (very basic heuristic)
-        // This looks for a start tag without a corresponding closing tag
-        // on the same "level" (very simplified and might have false positives).
-        // A proper solution would involve parsing and understanding the XML structure.
-        Pattern unclosedTagPattern = Pattern.compile("<([a-zA-Z0-9:]+)([^>]*)>(?!.*</\\1>)");
-        Matcher matcher = unclosedTagPattern.matcher(parsableXml);
-        parsableXml = matcher.replaceAll("<$1$2></$1>"); // Add a corresponding closing tag
-
-        // Note: More complex scenarios (e.g., deeply nested issues, truly broken structure)
-        // would require a more sophisticated approach, potentially involving a tolerant
-        // XML parser or manual inspection and correction.
+        // Additionally, handle cases where < or > might be at the very beginning
+        // or end of the element content.
+        parsableXml = parsableXml.replaceAll("<([^<>]*)</", (match) -> {
+            String content = match.substring(1, match.length() - 2); // Extract content
+            String escapedContent = content.replace("<", "&lt;").replace(">", "&gt;");
+            return "<" + escapedContent + "</";
+        });
 
         return parsableXml;
     }
